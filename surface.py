@@ -7,6 +7,9 @@ from patch import Patch
 
 
 class Surface:
+    """
+    Class representing a Bézier surface as a set of given patches.
+    """
     def __init__(self, length=0, width=0):
         self.patches = []
 
@@ -18,6 +21,11 @@ class Surface:
         self.patches.append(patch)
 
     def randomize(self, patch_length, patch_width, min_height=0, max_height=1):
+        """
+        Creates a random Bézier surface. The resulting surface will be C0 only.
+        patch_length is the number of patches along the x axis that will be generated.
+        patch_width is the number of patches along the y axis that will be generated.
+        """
         self.patches = []
         for w, l in product(range(patch_width), range(patch_length)):
             # Patches are created and stored in a 1D array.
@@ -45,8 +53,13 @@ class Surface:
             for i in range(4):
                 current_patch[i, 0] = previous_patch[i, 3]
 
-
     def load(self, filename):
+        """
+        Loads a surface from a text file.
+        The file must have the following structure:
+        Each line is a control point. It contains all 3 coordinates, separated by spaces only.
+        The file must contain n * 16 control points, where n is a positive integer.
+        """
         self.patches=[]
 
         control_points = np.loadtxt(filename)
@@ -67,15 +80,22 @@ class Surface:
             self.patches.append(patch)
 
     def save_in_file(self, filename):
+        """
+        Save the surface in a text file.
+        To see the file format, please refer to the 'load' method.
+        """
         with open(filename, 'w') as f:
             for patch in self:
                 f.write(str(patch))
                 f.write("\n")
 
-    def plot(self):
+    def plot(self, Nx_per_patch = 20, Ny_per_patch = 20):
+        """
+        Plots the surface, with the given number of points per axis and per patch.
+        """
         total_surface = None
         for patch in self:
-            patch_surface = patch.get_surface()
+            patch_surface = patch.get_surface(Nx_per_patch, Ny_per_patch)
             if total_surface is None:
                 total_surface = patch_surface
             else:

@@ -17,5 +17,7 @@ from surface import Surface
 
 surf = Surface()
 # surf.load("surface1")
-surf.randomize(2, 1)
-surf.plot()
+surf.randomize(1, 1)
+for patch in surf:
+    print(patch.get_normal_field([0, 0.5, 1], [0, 0.5, 1]))
+print('ok')
