@@ -108,47 +108,37 @@ class Patch:
 
         return point
 
-    def evaluate_second_order_mixed_derivative(self, u, v):
+    def evaluate_second_order_derivative(self, parameter_index_1, parameter_index_2, u, v):
         """
         Computes the second order mixed derivative.
-        Parameter_index = 1: we use the first variable, u.
-        Parameter_index = 2: we use the second variable, v.
-
-        Returns a 3D point.
-        """
-        point = np.zeros(shape=(3))
-
-        U = np.array([[0, 1, 2*u, 3*u**2]])
-        VT = np.transpose(np.array([[0, 1, 2*v, 3*v**2]]))
-
-        for k in range(3):
-            point[k] = U * M * self.control_points[:,:,k] * np.transpose(M) * VT
-
-        return point
-
-    def evaluate_second_order_partial_derivative(self, parameter_index, u, v):
-        """
-        Computes the second order partial derivative.
-        The variable used for the derivative is chose from the 'parameter_index'.
-        Parameter_index = 1: we use the first variable, u.
-        Parameter_index = 2: we use the second variable, v.
 
         Returns a 3D point.
         """
         point = np.zeros(shape=(3))
 
         # choice of the variable we use for the derivative: index=1 -> u, index=2 -> v
-        if parameter_index == 0:
+        if parameter_index_1 == 0 and parameter_index_2==0:
             U = np.array([[0, 0, 2, 6*u]]) # derivative of [1, x, x**2, x**3]
             VT = np.transpose(np.array([[v**i for i in range(4)]]))
-        else:
+
+        elif parameter_index_1 == 1 and parameter_index_2==1:
             U = np.array([[u**i for i in range(4)]])
             VT = np.transpose(np.array([[0, 0, 2, 6*v]]))
+
+        else:
+            U = np.array([[0, 1, 2*u, 3*u**2]])
+            VT = np.transpose(np.array([[0, 1, 2*v, 3*v**2]]))
 
         for k in range(3):
             point[k] = U * M * self.control_points[:,:,k] * np.transpose(M) * VT
 
         return point
+
+    def evaluate_normal(self, u, v):
+        Xu = self.evaluate_first_order_partial_derivative(0, u, v)
+        Xv = self.evaluate_first_order_partial_derivative(1, u, v)
+        cross_product = np.cross(Xu, Xv)
+        return cross_product / np.linalg.norm(cross_product)
 
     def get_normal_field(self, x_parameter, y_parameter):
         """
@@ -159,10 +149,7 @@ class Patch:
 
         for i, x in enumerate(x_parameter):
             for j, y in enumerate(y_parameter):
-                Xu = self.evaluate_first_order_partial_derivative(0, x, y)
-                Xv = self.evaluate_first_order_partial_derivative(1, x, y)
-                cross_product = np.cross(Xu, Xv)
-                normal_field[i, j] = cross_product / np.linalg.norm(cross_product)
+                normal_field[i, j] = self.evaluate_normal(x, y)
 
         return normal_field
 
@@ -182,3 +169,31 @@ class Patch:
             if abs(np.dot(normal_field[i, j], L) - c) < epsilon:
                 isophote.append(self.evaluate(x_param[i], y_param[j]))
         return isophote
+
+    def get_first_fundamental_form(self, u, w):
+        mat = np.zeros(shape=(2,2))
+        for i in range(1):
+            for j in range(1):
+                first_var = self.evaluate_first_order_partial_derivative(i, u, w)
+                second_var = self.evaluate_first_order_partial_derivative(j, u, w)
+                mat[i, j] = np.dot(first_var, second_var)
+        return mat
+
+    def get_second_fundamental_form(self, u, w):
+        mat = np.zeros(shape=(2,2))
+        N = self.evaluate_normal(u, w)
+
+        for i in range(1):
+            for j in range(1):
+                derivative = self.evaluate_second_order_derivative(i, j, u, w)
+                mat[i, j] = np.dot(derivative, N)
+        return mat
+
+    def evaluate_principal_curvature(self, u, w):
+        G = self.get_first_fundamental_form(u, w)
+        H = self.get_second_fundamental_form(u, w)
+        print(G)
+        print(H)
+        L = H * np.linalg.inv(G)
+        print(L)
+        return np.linalg.eig(L)
