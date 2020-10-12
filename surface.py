@@ -89,10 +89,8 @@ class Surface:
                 f.write(str(patch))
                 f.write("\n")
 
-    def plot(self, Nx_per_patch = 20, Ny_per_patch = 20):
-        """
-        Plots the surface, with the given number of points per axis and per patch.
-        """
+
+    def draw_to(self, ax, Nx_per_patch = 20, Ny_per_patch = 20, alpha=1):
         total_surface = None
         for patch in self:
             patch_surface = patch.get_surface(Nx_per_patch, Ny_per_patch)
@@ -105,12 +103,18 @@ class Surface:
         yline = total_surface[:, 1]
         zline = total_surface[:, 2]
 
+        ax.plot_trisurf(xline, yline, zline, cmap='viridis', edgecolor='none', alpha=alpha)
+
+    def plot(self, Nx_per_patch = 20, Ny_per_patch = 20):
+        """
+        Plots the surface, with the given number of points per axis and per patch.
+        """
         ax = plt.axes(projection='3d')
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
 
-        ax.plot_trisurf(xline, yline, zline, cmap='viridis', edgecolor='none')
+        self.draw_to(ax, Nx_per_patch, Ny_per_patch)
         plt.show()
 
     def compute_isophote(self, L, c):
@@ -121,7 +125,6 @@ class Surface:
         isophote = []
         for patch in self:
             isophote += patch.compute_isophote(L, c)
-
         return isophote
 
     def plot_isophote(self, L, c):
@@ -130,15 +133,21 @@ class Surface:
         for the given brightness c.
         """
         isophote = self.compute_isophote(L, c)
+        
+        if not isophote:
+            print("Aucune isophote trouvée pour les paramètres donnés.")
+            return
 
-        xline = isophote[:][0]
-        yline = isophote[:][1]
-        zline = isophote[:][2]
+        xline = [point[0] for point in isophote]
+        yline = [point[1] for point in isophote]
+        zline = [point[2] for point in isophote]
 
         ax = plt.axes(projection='3d')
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
 
-        ax.plot_trisurf(xline, yline, zline, cmap='viridis', edgecolor='none')
+        self.draw_to(ax, alpha=0.6)
+        ax.scatter3D(xline, yline, zline, c='red')
+        
         plt.show()

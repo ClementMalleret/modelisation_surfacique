@@ -130,8 +130,8 @@ class Patch:
         for the given brightness c.
         """
         epsilon = 0.01
-        x_param = np.arange(0, 1, 0.02)
-        y_param = np.arange(0, 1, 0.02)
+        x_param = np.arange(0, 1, 0.01)
+        y_param = np.arange(0, 1, 0.01)
         normal_field = self.get_normal_field(x_param, y_param)
 
         isophote = []

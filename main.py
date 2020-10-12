@@ -18,9 +18,11 @@ from surface import Surface
 # surf.save_in_file('surface4')
 
 surf = Surface()
-surf.load("surface1")
-# surf.randomize(1, 1)
+surf.load("surface3")
+# surf.randomize(1, 2)
 # for patch in surf:
 #     print(patch.get_normal_field([0, 0.5, 1], [0, 0.5, 1]))
-surf.plot_isophote(np.array([0, 1, 0]), 0.5)
+# surf.plot()
+# print(surf.patches[0].get_normal_field(np.arange(0, 1, 0.1), np.arange(0, 1, 0.1)))
+surf.plot_isophote(np.array([1, 1, 0]), 0.5)
 print('ok')
