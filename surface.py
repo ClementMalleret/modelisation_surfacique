@@ -112,3 +112,33 @@ class Surface:
 
         ax.plot_trisurf(xline, yline, zline, cmap='viridis', edgecolor='none')
         plt.show()
+
+    def compute_isophote(self, L, c):
+        """
+        Computes the isophote line for the given direction L, where L is an 3D vector, and
+        for the given brightness c.
+        """
+        isophote = []
+        for patch in self:
+            isophote += patch.compute_isophote(L, c)
+
+        return isophote
+
+    def plot_isophote(self, L, c):
+        """
+        Computes and plots the isophote line for the given direction L, where L is an 3D vector, and
+        for the given brightness c.
+        """
+        isophote = self.compute_isophote(L, c)
+
+        xline = isophote[:][0]
+        yline = isophote[:][1]
+        zline = isophote[:][2]
+
+        ax = plt.axes(projection='3d')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        ax.plot_trisurf(xline, yline, zline, cmap='viridis', edgecolor='none')
+        plt.show()

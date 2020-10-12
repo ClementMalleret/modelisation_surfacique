@@ -123,3 +123,20 @@ class Patch:
                 normal_field[i, j] = cross_product / np.linalg.norm(cross_product)
 
         return normal_field
+
+    def compute_isophote(self, L, c):
+        """
+        Computes the isophote line for the given direction L, where L is an 3D vector, and
+        for the given brightness c.
+        """
+        epsilon = 0.01
+        x_param = np.arange(0, 1, 0.02)
+        y_param = np.arange(0, 1, 0.02)
+        normal_field = self.get_normal_field(x_param, y_param)
+
+        isophote = []
+
+        for i, j in product(range(len(x_param)), range(len(y_param))):
+            if abs(np.dot(normal_field[i, j], L) - c) < epsilon:
+                isophote.append(self.evaluate(x_param[i], y_param[j]))
+        return isophote
