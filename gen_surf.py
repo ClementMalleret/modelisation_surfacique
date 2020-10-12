@@ -7,11 +7,8 @@ from shareable import casteljau
 
 
 class Patch:
-    def __init__(self, x, y, min_height=0, max_height=1):
+    def __init__(self):
         self.control_points = np.zeros(shape=(4, 4, 3))
-        for i in range(4):
-            for j in range(4):
-                self.control_points[i, j] = np.array([x + i * 1/3, y + j * 1/3, 0])
 
     def __str__(self):
         out = ""
@@ -37,9 +34,14 @@ class Patch:
             points[i + j * Nx] = self.evaluate(s, t)
         return points
 
-    def randomize(self, min_height=0, max_height=1):
+    def randomize(self, min_x, max_x, min_y, max_y, min_z=0, max_z=1):
+        x_step = (max_x - min_x) / 3
+        y_step = (max_y - min_y) / 3
         for i, j in product(range(4), repeat=2):
-            self.control_points[i, j, 2] = random.uniform(min_height, max_height)
+            x = min_x + i * x_step
+            y = min_y + j * y_step
+            z = random.uniform(min_z, max_z)
+            self.control_points[i, j] = np.array([x, y, z])
 
     def evaluate(self, s, t):
         line = np.zeros(shape=(4, 3))
@@ -70,7 +72,7 @@ class Surface:
     def add_patch(self, patch):
         self.patches.append(patch)
 
-    def randomize(self, patch_length=1, patch_width=1, min_height=0, max_height=1):
+    def randomize(self, patch_length, patch_width, min_height=0, max_height=1):
         self.patches = []
         for w, l in product(range(patch_width), range(patch_length)):
             # Patches are created and stored in a 1D array.
@@ -79,8 +81,10 @@ class Surface:
             # we import another surface, it may not follow this particular pattern.
             # It is however useful in this generation, as it allows us to easily correct random
             # patches to make them c0, without checking each control points 1 by 1.
-            patch = Patch(l, w)
-            patch.randomize()
+            patch = Patch()
+            patch.randomize(min_x = l, max_x = l + 1, 
+                            min_y = w, max_y = w + 1, 
+                            min_z = min_height, max_z = max_height)
             self.patches.append(patch)
         
         # make the connections continuous
@@ -106,7 +110,7 @@ class Surface:
         patches_control_points = np.split(control_points, nb_of_patches)
 
         for patch_nb in range(len(patches_control_points)):
-            patch = Patch(patch_nb, 0)
+            patch = Patch()
             patch_control_points = patches_control_points[patch_nb]
 
             for i in range(4):
@@ -145,34 +149,19 @@ class Surface:
         plt.show()
 
 
-# surf = Surface(1, 1)
-# surf.randomize()
-# surf.make_c0()
+# surf = Surface()
+# surf.randomize(1, 1)
 # surf.save_in_file('surface2')
 
-# surf = Surface(2, 2)
-# surf.randomize()
-# surf.make_c0()
+# surf = Surface()
+# surf.randomize(2, 2)
 # surf.save_in_file('surface3')
 
-# surf = Surface(1, 3)
-# surf.randomize()
-# surf.make_c0()
+# surf = Surface()
+# surf.randomize(1, 3)
 # surf.save_in_file('surface4')
 
-# surf = Surface(1, 3)
-# surf.randomize()
-# surf.make_c0()
-# surf.save_in_file('test')
-
 surf = Surface()
-# surf.load("surface3")
-surf.randomize(2, 2)
-# surf.make_c0()
-surf.save_in_file("test")
+surf.load("surface1")
+# surf.randomize(2, 2)
 surf.plot()
-# print(surf.patches[0][0])
-# print("================")
-# print(surf.patches[0][0].evaluate(1, 0))
-
-#TODO: pb de dim dans Surface: passer a un stockage 1D et foutre make_c0 dans randomize() pour pouvoir avoir tjrs acces aux dims 2D
