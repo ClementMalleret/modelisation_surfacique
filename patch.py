@@ -84,9 +84,9 @@ class Patch:
 
         return casteljau(line, s)
 
-    def evaluate_partial_derivative(self, parameter_index, u, v):
+    def evaluate_first_order_partial_derivative(self, parameter_index, u, v):
         """
-        Computes the partial derivative.
+        Computes the first order partial derivative.
         The variable used for the derivative is chose from the 'parameter_index'.
         Parameter_index = 1: we use the first variable, u.
         Parameter_index = 2: we use the second variable, v.
@@ -108,6 +108,48 @@ class Patch:
 
         return point
 
+    def evaluate_second_order_mixed_derivative(self, u, v):
+        """
+        Computes the second order mixed derivative.
+        Parameter_index = 1: we use the first variable, u.
+        Parameter_index = 2: we use the second variable, v.
+
+        Returns a 3D point.
+        """
+        point = np.zeros(shape=(3))
+
+        U = np.array([[0, 1, 2*u, 3*u**2]])
+        VT = np.transpose(np.array([[0, 1, 2*v, 3*v**2]]))
+
+        for k in range(3):
+            point[k] = U * M * self.control_points[:,:,k] * np.transpose(M) * VT
+
+        return point
+
+    def evaluate_second_order_partial_derivative(self, parameter_index, u, v):
+        """
+        Computes the second order partial derivative.
+        The variable used for the derivative is chose from the 'parameter_index'.
+        Parameter_index = 1: we use the first variable, u.
+        Parameter_index = 2: we use the second variable, v.
+
+        Returns a 3D point.
+        """
+        point = np.zeros(shape=(3))
+
+        # choice of the variable we use for the derivative: index=1 -> u, index=2 -> v
+        if parameter_index == 0:
+            U = np.array([[0, 0, 2, 6*u]]) # derivative of [1, x, x**2, x**3]
+            VT = np.transpose(np.array([[v**i for i in range(4)]]))
+        else:
+            U = np.array([[u**i for i in range(4)]])
+            VT = np.transpose(np.array([[0, 0, 2, 6*v]]))
+
+        for k in range(3):
+            point[k] = U * M * self.control_points[:,:,k] * np.transpose(M) * VT
+
+        return point
+
     def get_normal_field(self, x_parameter, y_parameter):
         """
         Returns the normal field of the surface, on the product of the given coordinate arrays,
@@ -117,8 +159,8 @@ class Patch:
 
         for i, x in enumerate(x_parameter):
             for j, y in enumerate(y_parameter):
-                Xu = self.evaluate_partial_derivative(0, x, y)
-                Xv = self.evaluate_partial_derivative(1, x, y)
+                Xu = self.evaluate_first_order_partial_derivative(0, x, y)
+                Xv = self.evaluate_first_order_partial_derivative(1, x, y)
                 cross_product = np.cross(Xu, Xv)
                 normal_field[i, j] = cross_product / np.linalg.norm(cross_product)
 
@@ -129,7 +171,7 @@ class Patch:
         Computes the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        epsilon = 0.01
+        epsilon = 0.02
         x_param = np.arange(0, 1, 0.01)
         y_param = np.arange(0, 1, 0.01)
         normal_field = self.get_normal_field(x_param, y_param)

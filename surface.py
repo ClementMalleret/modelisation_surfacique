@@ -132,15 +132,15 @@ class Surface:
         Computes and plots the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        isophote = self.compute_isophote(L, c)
+        isophotes = self.compute_isophote(L, c)
         
-        if not isophote:
-            print("Aucune isophote trouvée pour les paramètres donnés.")
+        if not isophotes:
+            print("No isophote found for the given parameters.")
             return
 
-        xline = [point[0] for point in isophote]
-        yline = [point[1] for point in isophote]
-        zline = [point[2] for point in isophote]
+        xline = [point[0] for point in isophotes]
+        yline = [point[1] for point in isophotes]
+        zline = [point[2] for point in isophotes]
 
         ax = plt.axes(projection='3d')
         ax.set_xlabel('x')
