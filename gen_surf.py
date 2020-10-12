@@ -61,36 +61,53 @@ class Patch:
 
 class Surface:
     def __init__(self, length=0, width=0):
-        self.length = length
-        self.width = width
-        self.patches = [[Patch(x, y) for y in range(width)] for x in range(length)]
+        self.patches = []
 
     def __iter__(self):
-        for l, w in product(range(self.length), range(self.width)):
-            yield self.patches[l][w]
+        for patch in self.patches:
+            yield patch
     
-    def add_patch(self, x, y, patch):
-        self.patches[x, y] = patch
+    def add_patch(self, patch):
+        self.patches.append(patch)
 
-    def randomize(self, min_height=0, max_height=1):
-        for patch in self:
-            patch.randomize(min_height, max_height)
+    def randomize(self, patch_length=1, patch_width=1, min_height=0, max_height=1):
+        self.patches = []
+        for w, l in product(range(patch_width), range(patch_length)):
+            # Patches are created and stored in a 1D array.
+            # The patch at coordinate (x, y) can be retrieved as self.patches[x + y * patch_length]
+            # However this structure is true ONLY in this generation fuction, as in general, if
+            # we import another surface, it may not follow this particular pattern.
+            # It is however useful in this generation, as it allows us to easily correct random
+            # patches to make them c0, without checking each control points 1 by 1.
+            patch = Patch(l, w)
+            patch.randomize()
+            self.patches.append(patch)
+        
+        # make the connections continuous
+        for l, w in product(range(1, patch_length), range(patch_width)):
+            previous_patch = self.patches[(l - 1) + w * patch_length]
+            current_patch = self.patches[l + w * patch_length]
+            for i in range(4):
+                current_patch[0, i] = previous_patch[3, i]
+        
+        for l, w in product(range(patch_length), range(1, patch_width)):
+            previous_patch = self.patches[l + (w - 1) * patch_length]
+            current_patch = self.patches[l + w * patch_length]
+            for i in range(4):
+                current_patch[i, 0] = previous_patch[i, 3]
+
 
     def load(self, filename):
-        self.patches=[[]]
+        self.patches=[]
 
         control_points = np.loadtxt(filename)
         nb_of_patches = int(len(control_points) / 16)
-        self.length = 1
-        self.width = nb_of_patches
 
         patches_control_points = np.split(control_points, nb_of_patches)
 
         for patch_nb in range(len(patches_control_points)):
-            print("plop")
             patch = Patch(patch_nb, 0)
             patch_control_points = patches_control_points[patch_nb]
-            print(patch_control_points)
 
             for i in range(4):
                 for j in range(4):
@@ -98,22 +115,7 @@ class Surface:
                     y = patch_control_points[4*i+j, 1]
                     x = patch_control_points[4*i+j, 0]
                     patch.control_points[i, j] = np.array([x, y, z])
-            self.patches[0].append(patch)
-            print(len(self.patches[0]))
-
-    def make_c0(self):
-        # make the connections continuous
-        for l, w in product(range(1, self.length), range(self.width)):
-            previous_patch = self.patches[l - 1][w]
-            current_patch = self.patches[l][w]
-            for i in range(4):
-                current_patch[0, i] = previous_patch[3, i]
-        
-        for l, w in product(range(self.length), range(1, self.width)):
-            previous_patch = self.patches[l][w - 1]
-            current_patch = self.patches[l][w]
-            for i in range(4):
-                current_patch[i, 0] = previous_patch[i, 3]
+            self.patches.append(patch)
 
     def save_in_file(self, filename):
         with open(filename, 'w') as f:
@@ -164,9 +166,10 @@ class Surface:
 # surf.save_in_file('test')
 
 surf = Surface()
-surf.load("surface3")
-# surf.randomize()
+# surf.load("surface3")
+surf.randomize(2, 2)
 # surf.make_c0()
+surf.save_in_file("test")
 surf.plot()
 # print(surf.patches[0][0])
 # print("================")
