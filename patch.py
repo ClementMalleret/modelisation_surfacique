@@ -32,8 +32,8 @@ class Patch:
 
     def __str__(self):
         out = ""
-        for i in range(4):
-            for j in range(4):
+        for j in range(4):
+            for i in range(4):
                 x, y, z = self.control_points[i, j]
                 out += "   %s   %s   %s\n" % (x, y, z)
         return out
@@ -53,8 +53,8 @@ class Patch:
         """
         points = np.zeros(shape=(Nx * Ny, 3))
         for i, j in product(range(Nx), range(Ny)):
-            s = i * 1/Nx
-            t = j * 1/Ny
+            s = i * 1/(Nx - 1)
+            t = j * 1/(Ny - 1)
             points[i + j * Nx] = self.evaluate(s, t)
         return points
 
@@ -165,9 +165,9 @@ class Patch:
         for the given brightness c.
         """
         if x_param is None:
-            x_param = np.arange(0, 1, 0.01)
+            x_param = np.arange(0, 1.01, 0.01)
         if y_param is None:
-            y_param = np.arange(0, 1, 0.01)
+            y_param = np.arange(0, 1.01, 0.01)
 
         normal_field = self.get_normal_field(x_param, y_param)
         isophote = []
@@ -196,8 +196,8 @@ class Patch:
         mat = np.zeros(shape=(2,2))
         N = self.evaluate_normal(u, w)
 
-        for i in range(1):
-            for j in range(1):
+        for i in range(2):
+            for j in range(2):
                 derivative = self.evaluate_second_order_derivative(i, j, u, w)
                 mat[i, j] = np.dot(derivative, N)
         return mat
@@ -212,3 +212,12 @@ class Patch:
         # eig returns 2 arrays: the first contains the eigenvalues (that we want).
         # The second contains the eigenvectors. That's why we only take the first element.
         return np.linalg.eig(L)[0]
+
+    def evaluate_gauss_curvature(self, Nx, Ny):
+        points = np.zeros(shape=(Nx * Ny))
+        for i, j in product(range(Nx), range(Ny)):
+            s = i * 1/(Nx - 1)
+            t = j * 1/(Ny - 1)
+            point = np.prod(self.evaluate_principal_curvature(s, t))
+            points[i + j * Nx] =  point
+        return points

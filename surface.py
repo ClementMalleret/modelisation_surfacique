@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import product
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
 from patch import Patch
@@ -150,4 +151,93 @@ class Surface:
         self.draw_to(ax, alpha=0.6)
         ax.scatter3D(xline, yline, zline, c='red')
         
+        plt.show()
+
+    def plot_curvature(self, Nx_per_patch, Ny_per_patch):
+        """
+        Plots the curvature of the surface, using the gauss curvature.
+        """
+        curvature_map = None
+        for patch in self:
+            patch_curvature_map = patch.evaluate_gauss_curvature(Nx_per_patch, Ny_per_patch)
+            if curvature_map is None:
+                curvature_map = patch_curvature_map
+            else:
+                curvature_map = np.concatenate((curvature_map, patch_curvature_map))
+
+        total_surface = None
+        for patch in self:
+            patch_surface = patch.get_surface(Nx_per_patch, Ny_per_patch)
+            if total_surface is None:
+                total_surface = patch_surface
+            else:
+                total_surface = np.concatenate((total_surface, patch_surface))
+
+        # Unfortunately, plot_trisurf doesn't support the facecolor keyword argument, that we
+        # need to plot the color map.
+        # (PR still in draft since 2018, yay https://github.com/matplotlib/matplotlib/pull/12073 )
+        # So we need to convert our surface to a format supported by plot_surface, which need a
+        # 2D array of the values. So we have to reorganize all our surface to make it work.
+        # It is long and ugly, but it works.
+        # A much simplier solution would have been to show the curvature as points using scatter3D,
+        # which uses the same format of points as plot_trisurf and supports facecolors.
+        # However I spend too much time and effort in this solution to abandon it.
+
+        # plot_surface works by using an array of array. The inner arrays corresponds to the lines:
+        # Thus, to acces an element, we do array[y][x], or array[y, x] if we use a numpy array.
+        # So do not be confused if we do mat[y, x] = val(x, y) in the following.
+
+        # Computing the necessary parameters
+        nb_points_per_patch = Nx_per_patch * Ny_per_patch
+
+        x_min_patch = min(total_surface[:nb_points_per_patch, 0])
+        x_max_patch = max(total_surface[:nb_points_per_patch, 0])
+        y_min_patch = min(total_surface[:nb_points_per_patch, 1])
+        y_max_patch = max(total_surface[:nb_points_per_patch, 1])
+
+        x_size_patch = x_max_patch - x_min_patch
+        y_size_patch = y_max_patch - y_min_patch
+
+        x_min = min(total_surface[:, 0])
+        x_max = max(total_surface[:, 0])
+        y_min = min(total_surface[:, 1])
+        y_max = max(total_surface[:, 1])           
+
+        x_step = x_size_patch / (Nx_per_patch - 1)
+        y_step = y_size_patch / (Ny_per_patch - 1)
+
+        # Initializing the resulting arrays
+        X = np.arange(x_min, x_max + x_step / 2, x_step)
+        Y = np.arange(y_min, y_max + y_step / 2, y_step)
+        Z = np.zeros(shape=(len(Y), len(X)))        
+        X, Y = np.meshgrid(X, Y)
+
+        curvature = np.zeros(shape=(len(Y), len(X)))
+
+        # Reorganizing data
+        for point, curvature_val in zip(total_surface, curvature_map):
+            x, y, z = point
+            i = int(round((x - x_min) / x_step))
+            j = int(round((y - y_min) / y_step))
+
+            Z[j, i] = z
+            curvature[j, i] = curvature_val
+
+        # plotting
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+
+        # add surface
+        cmap = cm.coolwarm(curvature)
+        ax.plot_surface(X, Y, Z, facecolors=cmap)
+        
+        # add colorbar
+        m = cm.ScalarMappable(cmap=cm.coolwarm)
+        m.set_array(curvature)
+        fig.colorbar(m)
+
         plt.show()
