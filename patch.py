@@ -88,8 +88,8 @@ class Patch:
         """
         Computes the first order partial derivative.
         The variable used for the derivative is chose from the 'parameter_index'.
-        Parameter_index = 1: we use the first variable, u.
-        Parameter_index = 2: we use the second variable, v.
+        Parameter_index = 0: we use the first variable, u.
+        Parameter_index = 1: we use the second variable, v.
 
         Returns a 3D point.
         """
@@ -110,7 +110,10 @@ class Patch:
 
     def evaluate_second_order_derivative(self, parameter_index_1, parameter_index_2, u, v):
         """
-        Computes the second order mixed derivative.
+        Computes the second order derivative.
+        The variable used for the derivative is chose from the 'parameter_index_i'.
+        Parameter_index_i = 0: we use the first variable, u.
+        Parameter_index_i = 1: we use the second variable, v.
 
         Returns a 3D point.
         """
@@ -118,7 +121,7 @@ class Patch:
 
         # choice of the variable we use for the derivative: index=1 -> u, index=2 -> v
         if parameter_index_1 == 0 and parameter_index_2==0:
-            U = np.array([[0, 0, 2, 6*u]]) # derivative of [1, x, x**2, x**3]
+            U = np.array([[0, 0, 2, 6*u]]) 
             VT = np.transpose(np.array([[v**i for i in range(4)]]))
 
         elif parameter_index_1 == 1 and parameter_index_2==1:
@@ -135,6 +138,9 @@ class Patch:
         return point
 
     def evaluate_normal(self, u, v):
+        """
+        Evaluates the normal vector to the surface, at the given parameters.
+        """
         Xu = self.evaluate_first_order_partial_derivative(0, u, v)
         Xv = self.evaluate_first_order_partial_derivative(1, u, v)
         cross_product = np.cross(Xu, Xv)
@@ -153,16 +159,17 @@ class Patch:
 
         return normal_field
 
-    def compute_isophote(self, L, c):
+    def compute_isophote(self, L, c, epsilon=0.02, x_param=None, y_param=None):
         """
         Computes the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        epsilon = 0.02
-        x_param = np.arange(0, 1, 0.01)
-        y_param = np.arange(0, 1, 0.01)
-        normal_field = self.get_normal_field(x_param, y_param)
+        if x_param is None:
+            x_param = np.arange(0, 1, 0.01)
+        if y_param is None:
+            y_param = np.arange(0, 1, 0.01)
 
+        normal_field = self.get_normal_field(x_param, y_param)
         isophote = []
 
         for i, j in product(range(len(x_param)), range(len(y_param))):
@@ -171,15 +178,21 @@ class Patch:
         return isophote
 
     def get_first_fundamental_form(self, u, w):
+        """
+        Returns the first fundamental form at the given parameters.
+        """
         mat = np.zeros(shape=(2,2))
-        for i in range(1):
-            for j in range(1):
+        for i in range(2):
+            for j in range(2):
                 first_var = self.evaluate_first_order_partial_derivative(i, u, w)
                 second_var = self.evaluate_first_order_partial_derivative(j, u, w)
                 mat[i, j] = np.dot(first_var, second_var)
         return mat
 
     def get_second_fundamental_form(self, u, w):
+        """
+        Returns the second fundamental form at the given parameters.
+        """
         mat = np.zeros(shape=(2,2))
         N = self.evaluate_normal(u, w)
 
@@ -190,10 +203,12 @@ class Patch:
         return mat
 
     def evaluate_principal_curvature(self, u, w):
+        """
+        Returns an np.array containing the principal curvatures at the given parameters.
+        """
         G = self.get_first_fundamental_form(u, w)
         H = self.get_second_fundamental_form(u, w)
-        print(G)
-        print(H)
         L = H * np.linalg.inv(G)
-        print(L)
-        return np.linalg.eig(L)
+        # eig returns 2 arrays: the first contains the eigenvalues (that we want).
+        # The second contains the eigenvectors. That's why we only take the first element.
+        return np.linalg.eig(L)[0]
