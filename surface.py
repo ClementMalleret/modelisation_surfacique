@@ -128,12 +128,12 @@ class Surface:
             isophote += patch.compute_isophote(L, c)
         return isophote
 
-    def plot_isophote(self, L, c):
+    def plot_isophote(self, L, c, epsilon):
         """
         Computes and plots the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        isophotes = self.compute_isophote(L, c)
+        isophotes = self.compute_isophote(L, c, epsilon)
         
         if not isophotes:
             print("No isophote found for the given parameters.")
