@@ -213,11 +213,12 @@ class Patch:
         # The second contains the eigenvectors. That's why we only take the first element.
         return np.linalg.eig(L)[0]
 
-    def evaluate_gauss_curvature(self, Nx, Ny):
+    def evaluate_abs_curvature(self, Nx, Ny):
         points = np.zeros(shape=(Nx * Ny))
         for i, j in product(range(Nx), range(Ny)):
             s = i * 1/(Nx - 1)
             t = j * 1/(Ny - 1)
-            point = np.prod(self.evaluate_principal_curvature(s, t))
+            curv = self.evaluate_principal_curvature(s, t)
+            point = abs(curv[0]) + abs(curv[1])
             points[i + j * Nx] =  point
         return points

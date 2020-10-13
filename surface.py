@@ -21,7 +21,7 @@ class Surface:
     def add_patch(self, patch):
         self.patches.append(patch)
 
-    def randomize(self, patch_length, patch_width, min_height=0, max_height=1):
+    def randomize(self, patch_length, patch_width, min_height=0, max_height=0.1):
         """
         Creates a random Bézier surface. The resulting surface will be C0 only.
         patch_length is the number of patches along the x axis that will be generated.
@@ -155,11 +155,11 @@ class Surface:
 
     def plot_curvature(self, Nx_per_patch, Ny_per_patch):
         """
-        Plots the curvature of the surface, using the gauss curvature.
+        Plots the curvature of the surface, using the absolute curvature.
         """
         curvature_map = None
         for patch in self:
-            patch_curvature_map = patch.evaluate_gauss_curvature(Nx_per_patch, Ny_per_patch)
+            patch_curvature_map = patch.evaluate_abs_curvature(Nx_per_patch, Ny_per_patch)
             if curvature_map is None:
                 curvature_map = patch_curvature_map
             else:

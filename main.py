@@ -18,7 +18,7 @@ from surface import Surface
 # surf.save_in_file('surface4')
 
 surf = Surface()
-surf.load("surface4")
+surf.load("surface3")
 # surf.randomize(1, 2)
 # for patch in surf:
 #     print(patch.get_normal_field([0, 0.5, 1], [0, 0.5, 1]))
