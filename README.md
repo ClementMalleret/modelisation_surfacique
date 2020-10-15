@@ -4,6 +4,7 @@ This archive contains the TP of Clément Malleret.
 
 You can find here a report.pdf file, containing my answers to the theorical questions, and the
 different observations asked.
+The Images folders contains every image used for the report (they are also present in report.pdf).
 
 To do this TP, I used 2 classes: one for Patches, and one for the total Surface.
 

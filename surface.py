@@ -21,7 +21,7 @@ class Surface:
     def add_patch(self, patch):
         self.patches.append(patch)
 
-    def randomize(self, patch_length, patch_width, min_height=0, max_height=0.1):
+    def randomize(self, patch_length, patch_width, min_height=0, max_height=0.2):
         """
         Creates a random Bézier surface. The resulting surface will be C0 only.
         patch_length is the number of patches along the x axis that will be generated.
@@ -94,7 +94,7 @@ class Surface:
         for patch in self:
             patch.draw_to(ax, Nx_per_patch, Ny_per_patch, color=color, **kwargs)
 
-    def plot(self, Nx_per_patch = 20, Ny_per_patch = 20):
+    def plot(self, Nx_per_patch = 20, Ny_per_patch = 20, cmap=None):
         """
         Plots the surface, with the given number of points per axis and per patch.
         """
@@ -103,7 +103,7 @@ class Surface:
         ax.set_ylabel('y')
         ax.set_zlabel('z')
 
-        self.draw_to(ax, Nx_per_patch, Ny_per_patch)
+        self.draw_to(ax, Nx_per_patch, Ny_per_patch, cmap=cmap)
         plt.show()
 
     def draw_isophote_to(self, ax, color, L, c, epsilon, x_param, y_param):
@@ -118,6 +118,9 @@ class Surface:
         """
         Computes and plots the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightnesses c (c is a vector of brignesses).
+
+        x_param and y_param are custom coordinates array that can be passed. If passed, the isophotes
+        will be calculated on the cartesian product of those arrays, instead of on [0, 0.1, ..., 1]².
         """
         if x_param is None:
             x_param = np.arange(0, 1.01, 0.01)
@@ -133,7 +136,7 @@ class Surface:
 
         for brightness, color in zip(c, colors):
             self.draw_isophote_to(ax, color, L, brightness, epsilon, x_param, y_param)
-        self.draw_to(ax, alpha=0.5)
+        self.draw_to(ax, cmap='viridis', alpha=0.5)
 
         plt.show()
 

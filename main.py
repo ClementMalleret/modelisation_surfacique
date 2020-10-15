@@ -20,13 +20,13 @@ def surfaces_generation():
     surf.randomize(1, 3)
     surf.save_in_file('surface4')
 
-def plot_surface(surface_name):
+def plot_surface(surface_name, cmap=None):
     """
     Code used to plot a given surface
     """
     surf = Surface()
     surf.load(surface_name)
-    surf.plot(30, 30)
+    surf.plot(30, 30, cmap)
 
 def plot_isophotes(surface_name, L, epsilon):
     """
@@ -34,7 +34,7 @@ def plot_isophotes(surface_name, L, epsilon):
     """
     surf = Surface()
     surf.load(surface_name)
-    surf.plot_isophotes(L, np.arange(0, 1, 0.1), epsilon=epsilon)
+    surf.plot_isophotes(L, np.arange(0, 1.01, 0.1), epsilon=epsilon)
 
 def plot_curvature(surface_name):
     """
@@ -46,30 +46,32 @@ def plot_curvature(surface_name):
 
 # surfaces_generation()
 
-# plot_surface("surface1")
-# plot_surface("surface2")
-# plot_surface("surface3")
-# plot_surface("surface4")
+# plot_surface("surface1", cmap='viridis')
+# plot_surface("surface2", cmap='viridis')
+# plot_surface("surface3", cmap='viridis')
+# plot_surface("surface4", cmap='viridis')
+
+
+# WARNING: the isophotes functions can be slow, especially at higher numbers of patches.
+# To get better speed (but less quality), pass a custom coordinate array for X and Y to
+# the Surface.plot_isophotes() function (see its documentation for details).
 
 # plot_isophotes("surface1", np.array([1, 0, 0]), 0.01)
 # plot_isophotes("surface1", np.array([0, 1, 0]), 0.01)
 # plot_isophotes("surface1", np.array([1, 1, 0]), 0.01)
-# plot_isophotes("surface1", np.array([1, 1, 1]), 0.01)
 
-# plot_isophotes("surface2", np.array([1, 0, 0]), 0.002)
-# plot_isophotes("surface2", np.array([0, 1, 0]), 0.002)
-# plot_isophotes("surface2", np.array([1, 1, 0]), 0.002)
-# plot_isophotes("surface2", np.array([1, 1, 1]), 0.002)
+# plot_isophotes("surface2", np.array([1, 0, 0]), 0.005)
+# plot_isophotes("surface2", np.array([0, 1, 0]), 0.005)
+# plot_isophotes("surface2", np.array([1, 1, 0]), 0.005)
 
-# plot_isophotes("surface3", np.array([1, 0, 0]), 0.002)
-# plot_isophotes("surface3", np.array([0, 1, 0]), 0.002)
-# plot_isophotes("surface3", np.array([1, 1, 0]), 0.002)
-# plot_isophotes("surface3", np.array([1, 1, 1]), 0.002)
+# plot_isophotes("surface3", np.array([1, 0, 0]), 0.005)
+# plot_isophotes("surface3", np.array([0, 1, 0]), 0.005)
+# plot_isophotes("surface3", np.array([1, 1, 0]), 0.005)
 
-# plot_isophotes("surface4", np.array([1, 0, 0]), 0.002)
-# plot_isophotes("surface4", np.array([0, 1, 0]), 0.002)
-# plot_isophotes("surface4", np.array([1, 1, 0]), 0.002)
-# plot_isophotes("surface4", np.array([1, 1, 1]), 0.002)
+# plot_isophotes("surface4", np.array([1, 0, 0]), 0.005)
+# plot_isophotes("surface4", np.array([0, 1, 0]), 0.005)
+# plot_isophotes("surface4", np.array([1, 1, 0]), 0.005)
+
 
 # plot_curvature("surface1")
 # plot_curvature("surface2")
