@@ -114,10 +114,10 @@ class Surface:
         for patch in self:
             patch.draw_isophote_to(ax, color, L, c, epsilon, x_param, y_param)
 
-    def plot_isophote(self, L, c, epsilon=0.01, x_param=None, y_param=None):
+    def plot_isophotes(self, L, c, epsilon=0.01, x_param=None, y_param=None):
         """
         Computes and plots the isophote line for the given direction L, where L is an 3D vector, and
-        for the given brightness c.
+        for the given brightnesses c (c is a vector of brignesses).
         """
         if x_param is None:
             x_param = np.arange(0, 1.01, 0.01)

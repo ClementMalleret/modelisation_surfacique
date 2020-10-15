@@ -189,6 +189,9 @@ class Patch:
         return isophote
 
     def draw_isophote_to(self, ax, color, L, c, epsilon, x_param, y_param):
+        """
+        Draws the given isophote to the given matplotlib axes
+        """
         isophote = self.compute_isophote(L, c, epsilon, x_param, y_param)
 
         xline = [point[0] for point in isophote]
@@ -234,6 +237,9 @@ class Patch:
         return np.linalg.eig(L)[0]
 
     def evaluate_abs_curvature(self, Nx, Ny):
+        """
+        Evalutes the absolute curvature regularily, with Nx points along the x axis, and Ny
+        """
         points = np.zeros(shape=(Nx, Ny))
         for i, j in product(range(Nx), range(Ny)):
             s = i * 1/(Nx - 1)
