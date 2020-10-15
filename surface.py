@@ -90,21 +90,9 @@ class Surface:
                 f.write(str(patch))
                 f.write("\n")
 
-
-    def draw_to(self, ax, Nx_per_patch = 20, Ny_per_patch = 20, alpha=1):
-        total_surface = None
+    def draw_to(self, ax, Nx_per_patch = 20, Ny_per_patch = 20, color='gray', **kwargs):
         for patch in self:
-            patch_surface = patch.get_surface(Nx_per_patch, Ny_per_patch)
-            if total_surface is None:
-                total_surface = patch_surface
-            else:
-                total_surface = np.concatenate((total_surface, patch_surface))
-        
-        xline = total_surface[:, 0]
-        yline = total_surface[:, 1]
-        zline = total_surface[:, 2]
-
-        ax.plot_trisurf(xline, yline, zline, cmap='viridis', edgecolor='none', alpha=alpha)
+            patch.draw_to(ax, Nx_per_patch, Ny_per_patch, color=color, **kwargs)
 
     def plot(self, Nx_per_patch = 20, Ny_per_patch = 20):
         """
@@ -118,126 +106,56 @@ class Surface:
         self.draw_to(ax, Nx_per_patch, Ny_per_patch)
         plt.show()
 
-    def compute_isophote(self, L, c):
+    def draw_isophote_to(self, ax, color, L, c, epsilon, x_param, y_param):
         """
         Computes the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        isophote = []
         for patch in self:
-            isophote += patch.compute_isophote(L, c)
-        return isophote
+            patch.draw_isophote_to(ax, color, L, c, epsilon, x_param, y_param)
 
-    def plot_isophote(self, L, c, epsilon):
+    def plot_isophote(self, L, c, epsilon=0.01, x_param=None, y_param=None):
         """
         Computes and plots the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        isophotes = self.compute_isophote(L, c, epsilon)
-        
-        if not isophotes:
-            print("No isophote found for the given parameters.")
-            return
-
-        xline = [point[0] for point in isophotes]
-        yline = [point[1] for point in isophotes]
-        zline = [point[2] for point in isophotes]
+        if x_param is None:
+            x_param = np.arange(0, 1.01, 0.01)
+        if y_param is None:
+            y_param = np.arange(0, 1.01, 0.01)
 
         ax = plt.axes(projection='3d')
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
 
-        self.draw_to(ax, alpha=0.6)
-        ax.scatter3D(xline, yline, zline, c='red')
-        
+        colors = cm.tab20(c)
+
+        for brightness, color in zip(c, colors):
+            self.draw_isophote_to(ax, color, L, brightness, epsilon, x_param, y_param)
+        self.draw_to(ax, alpha=0.5)
+
         plt.show()
 
     def plot_curvature(self, Nx_per_patch, Ny_per_patch):
-        """
-        Plots the curvature of the surface, using the absolute curvature.
-        """
-        curvature_map = None
-        for patch in self:
-            patch_curvature_map = patch.evaluate_abs_curvature(Nx_per_patch, Ny_per_patch)
-            if curvature_map is None:
-                curvature_map = patch_curvature_map
-            else:
-                curvature_map = np.concatenate((curvature_map, patch_curvature_map))
-
-        total_surface = None
-        for patch in self:
-            patch_surface = patch.get_surface(Nx_per_patch, Ny_per_patch)
-            if total_surface is None:
-                total_surface = patch_surface
-            else:
-                total_surface = np.concatenate((total_surface, patch_surface))
-
-        # Unfortunately, plot_trisurf doesn't support the facecolor keyword argument, that we
-        # need to plot the color map.
-        # (PR still in draft since 2018, yay https://github.com/matplotlib/matplotlib/pull/12073 )
-        # So we need to convert our surface to a format supported by plot_surface, which need a
-        # 2D array of the values. So we have to reorganize all our surface to make it work.
-        # It is long and ugly, but it works.
-        # A much simplier solution would have been to show the curvature as points using scatter3D,
-        # which uses the same format of points as plot_trisurf and supports facecolors.
-        # However I spend too much time and effort in this solution to abandon it.
-
-        # plot_surface works by using an array of array. The inner arrays corresponds to the lines:
-        # Thus, to acces an element, we do array[y][x], or array[y, x] if we use a numpy array.
-        # So do not be confused if we do mat[y, x] = val(x, y) in the following.
-
-        # Computing the necessary parameters
-        nb_points_per_patch = Nx_per_patch * Ny_per_patch
-
-        x_min_patch = min(total_surface[:nb_points_per_patch, 0])
-        x_max_patch = max(total_surface[:nb_points_per_patch, 0])
-        y_min_patch = min(total_surface[:nb_points_per_patch, 1])
-        y_max_patch = max(total_surface[:nb_points_per_patch, 1])
-
-        x_size_patch = x_max_patch - x_min_patch
-        y_size_patch = y_max_patch - y_min_patch
-
-        x_min = min(total_surface[:, 0])
-        x_max = max(total_surface[:, 0])
-        y_min = min(total_surface[:, 1])
-        y_max = max(total_surface[:, 1])           
-
-        x_step = x_size_patch / (Nx_per_patch - 1)
-        y_step = y_size_patch / (Ny_per_patch - 1)
-
-        # Initializing the resulting arrays
-        X = np.arange(x_min, x_max + x_step / 2, x_step)
-        Y = np.arange(y_min, y_max + y_step / 2, y_step)
-        Z = np.zeros(shape=(len(Y), len(X)))        
-        X, Y = np.meshgrid(X, Y)
-
-        curvature = np.zeros(shape=(len(Y), len(X)))
-
-        # Reorganizing data
-        for point, curvature_val in zip(total_surface, curvature_map):
-            x, y, z = point
-            i = int(round((x - x_min) / x_step))
-            j = int(round((y - y_min) / y_step))
-
-            Z[j, i] = z
-            curvature[j, i] = curvature_val
-
-        # plotting
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
 
-        # add surface
-        cmap = cm.coolwarm(curvature)
-        ax.plot_surface(X, Y, Z, facecolors=cmap)
-        
+        # we need to get every curvature to get the same color map for every patch.
+        tot_curvature = None
+        for patch in self:
+            curv = patch.draw_curvature_to(ax, Nx_per_patch, Ny_per_patch)
+            if tot_curvature is None:
+                tot_curvature = curv
+            else:
+                tot_curvature = np.concatenate((tot_curvature, curv))
+
         # add colorbar
-        m = cm.ScalarMappable(cmap=cm.coolwarm)
-        m.set_array(curvature)
+        m = cm.ScalarMappable(cmap=cm.Spectral_r)
+        m.set_array(tot_curvature)
         fig.colorbar(m)
 
         plt.show()

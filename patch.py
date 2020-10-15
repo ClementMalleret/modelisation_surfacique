@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from itertools import product
+from matplotlib import cm
 
 
 # Utilitary functions for the Patch class
@@ -47,15 +48,16 @@ class Patch:
         self.control_points[i, j] = val
 
     def get_surface(self, Nx=30, Ny=30):
+        
         """
         Returns an array of points of the surface, evaluated regularily with
         Nx points on the x axis, and Ny points on the y axis.
         """
-        points = np.zeros(shape=(Nx * Ny, 3))
+        points = np.zeros(shape=(Nx, Ny, 3))
         for i, j in product(range(Nx), range(Ny)):
             s = i * 1/(Nx - 1)
             t = j * 1/(Ny - 1)
-            points[i + j * Nx] = self.evaluate(s, t)
+            points[i, j] = self.evaluate(s, t)
         return points
 
     def randomize(self, min_x, max_x, min_y, max_y, min_z=0, max_z=1):
@@ -83,6 +85,16 @@ class Patch:
             line[column_index] = casteljau(column, t)
 
         return casteljau(line, s)
+
+    def draw_to(self, ax, Nx=20, Ny=20, **kwargs):
+        surface = self.get_surface(Nx, Ny)
+        
+        X = surface[:,:,0]
+        Y = surface[:,:,1]
+        Z = surface[:,:,2]
+
+        # add surface
+        ax.plot_surface(X, Y, Z, **kwargs)
 
     def evaluate_first_order_partial_derivative(self, parameter_index, u, v):
         """
@@ -144,7 +156,11 @@ class Patch:
         Xu = self.evaluate_first_order_partial_derivative(0, u, v)
         Xv = self.evaluate_first_order_partial_derivative(1, u, v)
         cross_product = np.cross(Xu, Xv)
-        return cross_product / np.linalg.norm(cross_product)
+        norm = np.linalg.norm(cross_product)
+        if norm == 0:
+            return(np.array([0, 0, 0]))
+        else:
+            return cross_product / norm
 
     def get_normal_field(self, x_parameter, y_parameter):
         """
@@ -159,16 +175,11 @@ class Patch:
 
         return normal_field
 
-    def compute_isophote(self, L, c, epsilon=0.02, x_param=None, y_param=None):
+    def compute_isophote(self, L, c, epsilon, x_param, y_param):
         """
         Computes the isophote line for the given direction L, where L is an 3D vector, and
         for the given brightness c.
         """
-        if x_param is None:
-            x_param = np.arange(0, 1.01, 0.01)
-        if y_param is None:
-            y_param = np.arange(0, 1.01, 0.01)
-
         normal_field = self.get_normal_field(x_param, y_param)
         isophote = []
 
@@ -176,6 +187,15 @@ class Patch:
             if abs(np.dot(normal_field[i, j], L) - c) < epsilon:
                 isophote.append(self.evaluate(x_param[i], y_param[j]))
         return isophote
+
+    def draw_isophote_to(self, ax, color, L, c, epsilon, x_param, y_param):
+        isophote = self.compute_isophote(L, c, epsilon, x_param, y_param)
+
+        xline = [point[0] for point in isophote]
+        yline = [point[1] for point in isophote]
+        zline = [point[2] for point in isophote]
+
+        ax.scatter3D(xline, yline, zline, c=[color])
 
     def get_first_fundamental_form(self, u, w):
         """
@@ -214,11 +234,20 @@ class Patch:
         return np.linalg.eig(L)[0]
 
     def evaluate_abs_curvature(self, Nx, Ny):
-        points = np.zeros(shape=(Nx * Ny))
+        points = np.zeros(shape=(Nx, Ny))
         for i, j in product(range(Nx), range(Ny)):
             s = i * 1/(Nx - 1)
             t = j * 1/(Ny - 1)
             curv = self.evaluate_principal_curvature(s, t)
             point = abs(curv[0]) + abs(curv[1])
-            points[i + j * Nx] =  point
+            points[i, j] =  point
         return points
+
+    def draw_curvature_to(self, ax, Nx, Ny):
+        curvature = self.evaluate_abs_curvature(Nx, Ny)
+        
+        # add surface
+        cmap = cm.Spectral_r(curvature)
+        self.draw_to(ax, Nx, Ny, facecolors=cmap)
+        
+        return curvature
