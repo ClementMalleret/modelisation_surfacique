@@ -78,4 +78,3 @@ def plot_curvature(surface_name):
 # plot_curvature("../surfaces/surface2")
 # plot_curvature("../surfaces/surface3")
 # plot_curvature("../surfaces/surface4")
-# plot_curvature("../surfaces/teapot")
